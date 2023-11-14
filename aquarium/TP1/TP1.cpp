@@ -9,7 +9,7 @@
 
 // Include GLFW
 #include <GLFW/glfw3.h>
-GLFWwindow* window;
+GLFWwindow *window;
 
 // Include GLM
 #include <glm/glm.hpp>
@@ -22,6 +22,8 @@ using namespace glm;
 #include <common/objloader.hpp>
 #include <common/vboindexer.hpp>
 
+//#include <common/stb_image.h>
+
 void processInput(GLFWwindow *window);
 
 // settings
@@ -29,25 +31,95 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 // camera
-glm::vec3 camera_position   = glm::vec3(0.0f, 0.0f,  3.0f);
+glm::vec3 camera_position = glm::vec3(0.0f, 0.0f, 3.0f);
 glm::vec3 camera_target = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 camera_up    = glm::vec3(0.0f, 1.0f,  0.0f);
+glm::vec3 camera_up = glm::vec3(0.0f, 1.0f, 0.0f);
 
 // timing
-float deltaTime = 0.0f;	// time between current frame and last frame
+float deltaTime = 0.0f; // time between current frame and last frame
 float lastFrame = 0.0f;
 
-//rotation
+// rotation
 float angle = 0.;
 float zoom = 1.;
+
+float theta;
+
+glm::mat4 Model, View, Projection;
 /*******************************************************************************/
 
-int main( void )
+struct BoiteAquarium{
+    glm::vec3 center;
+    float tailleX, tailleY, tailleZ;
+    glm::vec3 BBmin, BBmax;
+    std::vector<glm::vec3> sommetsBox;
+    std::vector<unsigned short> trianglesBox;
+    std::vector<std::vector<unsigned short>> faces;
+
+    glm::vec3 getCenter() const {return center;}
+    void setCenter(glm::vec3 newCenter) {center = newCenter;}
+    float getHeight() const {return tailleY;}
+    void setHeight(float newTailleY) {tailleY = newTailleY;}
+    float getWidth() const {return tailleX;}
+    void setWidth(float newTailleX) {tailleX = newTailleX;}
+    float getDepth() const {return tailleZ;}
+    void setDepth(float newTailleZ) {tailleZ = newTailleZ;}
+
+    void createBox(glm::vec3 c, float x, float y, float z){
+        center = c;
+        tailleX = x;
+        tailleY = y;
+        tailleZ = z;
+        BBmin = glm::vec3(c[0] - tailleX/2, c[1] - tailleY/2, c[2] - tailleZ/2);
+        BBmax = glm::vec3(c[0] + tailleX/2, c[1] + tailleY/2, c[2] + tailleZ/2);
+        sommetsBox.resize(8);
+    }
+
+    void createVerticesBox(){
+        /*
+          5___7
+         /    /|
+        1____3 |
+        |  4 | |6
+        |____|/
+        0    2
+        */
+        sommetsBox[0] = BBmin ;
+        sommetsBox[1] = glm::vec3(BBmin[0], BBmin[1] + tailleY, BBmin[2]);
+        sommetsBox[2] = glm::vec3(BBmin[0] + tailleX, BBmin[1], BBmin[2]);
+        sommetsBox[3] = glm::vec3(BBmin[0] + tailleX, BBmin[1] + tailleY, BBmin[2]);                                
+        sommetsBox[4] = glm::vec3(BBmin[0], BBmin[1], BBmin[2] + tailleZ);
+        sommetsBox[5] = glm::vec3(BBmin[0], BBmin[1] + tailleY, BBmin[2] + tailleZ);
+        sommetsBox[6] = glm::vec3(BBmin[0] + tailleX, BBmin[1], BBmin[2] + tailleZ);
+        sommetsBox[7] = glm::vec3(BBmin[0] + tailleX, BBmin[1] + tailleY, BBmin[2] + tailleZ);
+        trianglesBox = {0,1,2,
+                        1,3,2,
+                        4,5,0,
+                        5,1,0,
+                        6,7,4,
+                        7,5,4,
+                        2,3,6,
+                        3,7,6,
+                        1,5,3,
+                        5,7,3,
+                        6,2,4,
+                        2,0,4};
+        faces = {{0,1,2,3},{4,5,0,1},{6,7,4,5},{2,3,6,7},{1,5,3,7},{6,2,4,0}};
+    }
+
+
+
+};
+
+
+
+
+int main(void)
 {
     // Initialise GLFW
-    if( !glfwInit() )
+    if (!glfwInit())
     {
-        fprintf( stderr, "Failed to initialize GLFW\n" );
+        fprintf(stderr, "Failed to initialize GLFW\n");
         getchar();
         return -1;
     }
@@ -59,9 +131,10 @@ int main( void )
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Open a window and create its OpenGL context
-    window = glfwCreateWindow( 1024, 768, "TP1 - GLFW", NULL, NULL);
-    if( window == NULL ){
-        fprintf( stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
+    window = glfwCreateWindow(1024, 768, "TP1 - GLFW", NULL, NULL);
+    if (window == NULL)
+    {
+        fprintf(stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n");
         getchar();
         glfwTerminate();
         return -1;
@@ -70,7 +143,8 @@ int main( void )
 
     // Initialize GLEW
     glewExperimental = true; // Needed for core profile
-    if (glewInit() != GLEW_OK) {
+    if (glewInit() != GLEW_OK)
+    {
         fprintf(stderr, "Failed to initialize GLEW\n");
         getchar();
         glfwTerminate();
@@ -84,7 +158,7 @@ int main( void )
 
     // Set the mouse at the center of the screen
     glfwPollEvents();
-    glfwSetCursorPos(window, 1024/2, 768/2);
+    glfwSetCursorPos(window, 1024 / 2, 768 / 2);
 
     // Dark blue background
     glClearColor(0.8f, 0.8f, 0.8f, 0.0f);
@@ -95,26 +169,31 @@ int main( void )
     glDepthFunc(GL_LESS);
 
     // Cull triangles which normal is not towards the camera
-    //glEnable(GL_CULL_FACE);
+    // glEnable(GL_CULL_FACE);
 
     GLuint VertexArrayID;
     glGenVertexArrays(1, &VertexArrayID);
     glBindVertexArray(VertexArrayID);
 
     // Create and compile our GLSL program from the shaders
-    GLuint programID = LoadShaders( "vertex_shader.glsl", "fragment_shader.glsl" );
+    GLuint programID = LoadShaders("vertex_shader.glsl", "fragment_shader.glsl");
 
     /*****************TODO***********************/
     // Get a handle for our "Model View Projection" matrices uniforms
 
     /****************************************/
-    std::vector<unsigned short> indices; //Triangles concaténés dans une liste
-    std::vector<std::vector<unsigned short> > triangles;
+    std::vector<unsigned short> indices; // Triangles concaténés dans une liste
+    std::vector<std::vector<unsigned short>> triangles;
     std::vector<glm::vec3> indexed_vertices;
 
-    //Chargement du fichier de maillage
-    std::string filename("chair.off");
-    loadOFF(filename, indexed_vertices, indices, triangles );
+    // Chargement du fichier de maillage
+    //std::string filename("chair.off");
+    BoiteAquarium aquarium ;
+    aquarium.createBox(glm::vec3(0,0,0),1,1,1);
+    aquarium.createVerticesBox();
+    //loadOFF(filename, indexed_vertices, indices, triangles);
+    indices = aquarium.trianglesBox ;
+    indexed_vertices = aquarium.sommetsBox ;
 
     // Load it into a VBO
 
@@ -127,19 +206,45 @@ int main( void )
     GLuint elementbuffer;
     glGenBuffers(1, &elementbuffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned short), &indices[0] , GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned short), &indices[0], GL_STATIC_DRAW);
 
     // Get a handle for our "LightPosition" uniform
     glUseProgram(programID);
     GLuint LightID = glGetUniformLocation(programID, "LightPosition_worldspace");
 
-
-
     // For speed computation
     double lastTime = glfwGetTime();
     int nbFrames = 0;
+    for(int i = 0 ; i<8 ; i++){
+        std::cout<<aquarium.sommetsBox[i][0]<<" ; "<<aquarium.sommetsBox[i][1]<<" ; "<<aquarium.sommetsBox[i][2]<<std::endl ;
+    }
+    /* unsigned int texture0, texture1, texture2, texture3;
+    int width, height, nrChannels;
+    int widthHeightmap, heightHeightmap;
+    glGenTextures(1, &texture1);
+    glBindTexture(GL_TEXTURE_2D, texture1);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    do{
+    unsigned char *data = stbi_load("earth.png", &width, &height, &nrChannels, 0);
+    if (data)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data); */
+
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable( GL_BLEND );
+    do
+    {
 
         // Measure speed
         // per-frame time logic
@@ -152,13 +257,11 @@ int main( void )
         // -----
         processInput(window);
 
-
         // Clear the screen
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Use our shader
         glUseProgram(programID);
-
 
         /*****************TODO***********************/
         // Model matrix : an identity matrix (model will be at the origin) then change
@@ -169,34 +272,48 @@ int main( void )
 
         // Send our transformation to the currently bound shader,
         // in the "Model View Projection" to the shader uniforms
+        // Initialisation des matrices de transformation
+        Model = glm::rotate(Model, glm::radians(theta), glm::vec3(0.0f, 1.0f, 0.0f));
+        View = glm::lookAt(
+            camera_position,
+            camera_target,
+            camera_up); // matrice de vue
+        View = glm::rotate(View, glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        Projection = glm::perspective(
+            glm::radians(45.0f),
+            (float)SCR_WIDTH / (float)SCR_HEIGHT,
+            0.1f,
+            100.0f); // matrice de projection
+
+        // Envoi des matrices de transformation au shader
+        glUniformMatrix4fv(glGetUniformLocation(programID, "ModelMatrix"), 1, GL_FALSE, &Model[0][0]);
+        glUniformMatrix4fv(glGetUniformLocation(programID, "ViewMatrix"), 1, GL_FALSE, &View[0][0]);
+        glUniformMatrix4fv(glGetUniformLocation(programID, "ProjectionMatrix"), 1, GL_FALSE, &Projection[0][0]);
 
         /****************************************/
-
-
-
 
         // 1rst attribute buffer : vertices
         glEnableVertexAttribArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
         glVertexAttribPointer(
-                    0,                  // attribute
-                    3,                  // size
-                    GL_FLOAT,           // type
-                    GL_FALSE,           // normalized?
-                    0,                  // stride
-                    (void*)0            // array buffer offset
-                    );
+            0,        // attribute
+            3,        // size
+            GL_FLOAT, // type
+            GL_FALSE, // normalized?
+            0,        // stride
+            (void *)0 // array buffer offset
+        );
 
         // Index buffer
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
 
         // Draw the triangles !
         glDrawElements(
-                    GL_TRIANGLES,      // mode
-                    indices.size(),    // count
-                    GL_UNSIGNED_SHORT,   // type
-                    (void*)0           // element array buffer offset
-                    );
+            GL_TRIANGLES,      // mode
+            indices.size(),    // count
+            GL_UNSIGNED_SHORT, // type
+            (void *)0          // element array buffer offset
+        );
 
         glDisableVertexAttribArray(0);
 
@@ -205,8 +322,8 @@ int main( void )
         glfwPollEvents();
 
     } // Check if the ESC key was pressed or the window was closed
-    while( glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS &&
-           glfwWindowShouldClose(window) == 0 );
+    while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
+           glfwWindowShouldClose(window) == 0);
 
     // Cleanup VBO and shader
     glDeleteBuffers(1, &vertexbuffer);
@@ -220,7 +337,6 @@ int main( void )
     return 0;
 }
 
-
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow *window)
@@ -228,22 +344,71 @@ void processInput(GLFWwindow *window)
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
-    //Camera zoom in and out
+    // Camera zoom in and out
     float cameraSpeed = 2.5 * deltaTime;
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         camera_position += cameraSpeed * camera_target;
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
         camera_position -= cameraSpeed * camera_target;
 
-    //TODO add translations
+    // TODO add translations
+    // if (glfwGetKey(window, GLFW_KEY_KP_ADD) == GLFW_PRESS)
+    // {
+    //     nbPointH++;
+    //     nbPointL++;
+    // }
+    // if (glfwGetKey(window, GLFW_KEY_KP_SUBTRACT) == GLFW_PRESS)
+    // {
+    //     nbPointH--;
+    //     nbPointL--;
+    // }
+    if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
+    {
+        theta = 0.5;
+        Model = glm::rotate(Model, glm::radians(theta), glm::vec3(0.0f, 1.0f, 0.0f));
+        View = glm::lookAt(
+            camera_position,
+            camera_target,
+            camera_up); // matrice de vue
+        View = glm::rotate(View, glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        Projection = glm::perspective(
+            glm::radians(45.0f),
+            (float)SCR_WIDTH / (float)SCR_HEIGHT,
+            0.1f,
+            100.0f); // matrice de projection
+    }
+    if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS)
+    {
+        theta = 0;
+        // ModelMatrix = glm::mat4(1.0f);
+        View = glm::lookAt(
+            camera_position,
+            camera_target,
+            camera_up); // matrice de vue
+        Projection = glm::perspective(
+            glm::radians(45.0f),
+            (float)SCR_WIDTH / (float)SCR_HEIGHT,
+            0.1f,
+            100.0f);
+    }
 
+    // theta = 0.5 ;
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+    {
+        theta += 0.01;
+    }
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+    {
+        theta -= 0.01;
+    }
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
 // ---------------------------------------------------------------------------------------------
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
     // make sure the viewport matches the new window dimensions; note that width and
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
 }
+
