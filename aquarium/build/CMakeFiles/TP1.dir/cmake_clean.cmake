@@ -1,6 +1,8 @@
 file(REMOVE_RECURSE
   "CMakeFiles/TP1.dir/TP1/TP1.cpp.o"
   "CMakeFiles/TP1.dir/TP1/TP1.cpp.o.d"
+  "CMakeFiles/TP1.dir/common/Water.cpp.o"
+  "CMakeFiles/TP1.dir/common/Water.cpp.o.d"
   "CMakeFiles/TP1.dir/common/controls.cpp.o"
   "CMakeFiles/TP1.dir/common/controls.cpp.o.d"
   "CMakeFiles/TP1.dir/common/objloader.cpp.o"

@@ -56,6 +56,7 @@ add_definitions(
 # TP1
 add_executable(TP1
         TP1/TP1.cpp
+		
 	common/shader.cpp
 	common/shader.hpp
 	common/controls.cpp
@@ -66,9 +67,13 @@ add_executable(TP1
 	common/objloader.hpp
 	common/vboindexer.cpp
 	common/vboindexer.hpp
-	
+	common/Water.cpp
+	common/Water.hpp
+
         TP1/vertex_shader.glsl
         TP1/fragment_shader.glsl
+
+		
 )
 target_link_libraries(TP1
 	${ALL_LIBS}

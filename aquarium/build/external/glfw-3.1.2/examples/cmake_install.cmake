@@ -1,4 +1,4 @@
-# Install script for directory: /home/marie/Desktop/TP1_code/external/glfw-3.1.2/examples
+# Install script for directory: /home/alexandre/Documents/M2/Aquarium/Projet-Aquarium/aquarium/external/glfw-3.1.2/examples
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

@@ -1,4 +1,4 @@
-# Install script for directory: /home/marie/Desktop/TP1_code
+# Install script for directory: /home/alexandre/Documents/M2/Aquarium/Projet-Aquarium/aquarium
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -44,7 +44,7 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("/home/marie/Desktop/TP1_code/build/external/cmake_install.cmake")
+  include("/home/alexandre/Documents/M2/Aquarium/Projet-Aquarium/aquarium/build/external/cmake_install.cmake")
 
 endif()
 
@@ -56,5 +56,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/marie/Desktop/TP1_code/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/alexandre/Documents/M2/Aquarium/Projet-Aquarium/aquarium/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

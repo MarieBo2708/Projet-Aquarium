@@ -1,4 +1,4 @@
-# Install script for directory: /home/marie/Desktop/TP1_code/external
+# Install script for directory: /home/alexandre/Documents/M2/Aquarium/Projet-Aquarium/aquarium/external
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -44,7 +44,7 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("/home/marie/Desktop/TP1_code/build/external/glfw-3.1.2/cmake_install.cmake")
+  include("/home/alexandre/Documents/M2/Aquarium/Projet-Aquarium/aquarium/build/external/glfw-3.1.2/cmake_install.cmake")
 
 endif()
 

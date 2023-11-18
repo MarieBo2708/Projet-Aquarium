@@ -21,8 +21,8 @@ using namespace glm;
 #include <common/shader.hpp>
 #include <common/objloader.hpp>
 #include <common/vboindexer.hpp>
-
-//#include <common/stb_image.h>
+#include <common/Water.hpp>
+// #include <common/stb_image.h>
 
 void processInput(GLFWwindow *window);
 
@@ -48,34 +48,38 @@ float theta;
 glm::mat4 Model, View, Projection;
 /*******************************************************************************/
 
-struct BoiteAquarium{
+struct BoiteAquarium
+{
     glm::vec3 center;
     float tailleX, tailleY, tailleZ;
     glm::vec3 BBmin, BBmax;
     std::vector<glm::vec3> sommetsBox;
     std::vector<unsigned short> trianglesBox;
     std::vector<std::vector<unsigned short>> faces;
+    int mode = 0;
 
-    glm::vec3 getCenter() const {return center;}
-    void setCenter(glm::vec3 newCenter) {center = newCenter;}
-    float getHeight() const {return tailleY;}
-    void setHeight(float newTailleY) {tailleY = newTailleY;}
-    float getWidth() const {return tailleX;}
-    void setWidth(float newTailleX) {tailleX = newTailleX;}
-    float getDepth() const {return tailleZ;}
-    void setDepth(float newTailleZ) {tailleZ = newTailleZ;}
+    glm::vec3 getCenter() const { return center; }
+    void setCenter(glm::vec3 newCenter) { center = newCenter; }
+    float getHeight() const { return tailleY; }
+    void setHeight(float newTailleY) { tailleY = newTailleY; }
+    float getWidth() const { return tailleX; }
+    void setWidth(float newTailleX) { tailleX = newTailleX; }
+    float getDepth() const { return tailleZ; }
+    void setDepth(float newTailleZ) { tailleZ = newTailleZ; }
 
-    void createBox(glm::vec3 c, float x, float y, float z){
+    void createBox(glm::vec3 c, float x, float y, float z)
+    {
         center = c;
         tailleX = x;
         tailleY = y;
         tailleZ = z;
-        BBmin = glm::vec3(c[0] - tailleX/2, c[1] - tailleY/2, c[2] - tailleZ/2);
-        BBmax = glm::vec3(c[0] + tailleX/2, c[1] + tailleY/2, c[2] + tailleZ/2);
+        BBmin = glm::vec3(c[0] - tailleX / 2, c[1] - tailleY / 2, c[2] - tailleZ / 2);
+        BBmax = glm::vec3(c[0] + tailleX / 2, c[1] + tailleY / 2, c[2] + tailleZ / 2);
         sommetsBox.resize(8);
     }
 
-    void createVerticesBox(){
+    void createVerticesBox()
+    {
         /*
           5___7
          /    /|
@@ -84,35 +88,57 @@ struct BoiteAquarium{
         |____|/
         0    2
         */
-        sommetsBox[0] = BBmin ;
+        sommetsBox[0] = BBmin;
         sommetsBox[1] = glm::vec3(BBmin[0], BBmin[1] + tailleY, BBmin[2]);
         sommetsBox[2] = glm::vec3(BBmin[0] + tailleX, BBmin[1], BBmin[2]);
-        sommetsBox[3] = glm::vec3(BBmin[0] + tailleX, BBmin[1] + tailleY, BBmin[2]);                                
+        sommetsBox[3] = glm::vec3(BBmin[0] + tailleX, BBmin[1] + tailleY, BBmin[2]);
         sommetsBox[4] = glm::vec3(BBmin[0], BBmin[1], BBmin[2] + tailleZ);
         sommetsBox[5] = glm::vec3(BBmin[0], BBmin[1] + tailleY, BBmin[2] + tailleZ);
         sommetsBox[6] = glm::vec3(BBmin[0] + tailleX, BBmin[1], BBmin[2] + tailleZ);
         sommetsBox[7] = glm::vec3(BBmin[0] + tailleX, BBmin[1] + tailleY, BBmin[2] + tailleZ);
-        trianglesBox = {0,1,2,
-                        1,3,2,
-                        4,5,0,
-                        5,1,0,
-                        6,7,4,
-                        7,5,4,
-                        2,3,6,
-                        3,7,6,
-                        1,5,3,
-                        5,7,3,
-                        6,2,4,
-                        2,0,4};
-        faces = {{0,1,2,3},{4,5,0,1},{6,7,4,5},{2,3,6,7},{1,5,3,7},{6,2,4,0}};
+        trianglesBox = {0, 1, 2,
+                        1, 3, 2,
+                        4, 5, 0,
+                        5, 1, 0,
+                        6, 7, 4,
+                        7, 5, 4,
+                        2, 3, 6,
+                        3, 7, 6,
+                        1, 5, 3,
+                        5, 7, 3,
+                        6, 2, 4,
+                        2, 0, 4};
+        faces = {{0, 1, 2, 3}, {4, 5, 0, 1}, {6, 7, 4, 5}, {2, 3, 6, 7}, {1, 5, 3, 7}, {6, 2, 4, 0}};
     }
-
-
-
 };
 
+void drawEnsemble(uint programID, int mode)
+{
+    glUniform1i(glGetUniformLocation(programID, "mode"), mode);
 
+    // initbuffer !!!!!
+    if (mode == 0)
+    {
+        // glUniform1i(glGetUniformLocation(programID, "texture_terrain"), 0);
+    }
+}
 
+void simulateWater(float time, Water water)
+{
+    float amplitude = 2.0f;
+    float frequency = 0.01f;
+
+    float wave = amplitude * std::sin(frequency * time);
+    int count = water.getSommets().size() / 2;
+    for (int i = 0; i < water.getResolution(); i++)
+    {
+        for (int j = 0; j < water.getResolution(); j++)
+        {
+            water.getSommets()[count + i * water.getResolution() + j][1] = water.getSommets()[count + i * water.getResolution() + j][1] + wave;
+            //std::cout << water.getSommets()[count + i * water.getResolution() + j][1] + wave << std::endl;
+        }
+    }
+}
 
 int main(void)
 {
@@ -187,26 +213,48 @@ int main(void)
     std::vector<glm::vec3> indexed_vertices;
 
     // Chargement du fichier de maillage
-    //std::string filename("chair.off");
-    BoiteAquarium aquarium ;
-    aquarium.createBox(glm::vec3(0,0,0),1,1,1);
+    // std::string filename("chair.off");
+    BoiteAquarium aquarium;
+    aquarium.createBox(glm::vec3(0, 0, 0), 1, 1, 1);
     aquarium.createVerticesBox();
-    //loadOFF(filename, indexed_vertices, indices, triangles);
-    indices = aquarium.trianglesBox ;
-    indexed_vertices = aquarium.sommetsBox ;
+    // loadOFF(filename, indexed_vertices, indices, triangles);
+    Water w = Water();
+    w.createAquarium();
+    indices = aquarium.trianglesBox;
 
+    // indices.insert(indices.end(), w.getSommets().begin(), w.getSommets().end());
+    indexed_vertices = aquarium.sommetsBox;
+    // indexed_vertices.insert(indexed_vertices.end(), w.getIndices().begin(), w.getIndices().end());
+    std::vector<unsigned short> indicesWater; // Triangles concaténés dans une liste
+    std::vector<std::vector<unsigned short>> trianglesWater;
+    std::vector<glm::vec3> indexed_verticesWater;
+
+    indicesWater = w.getIndices();
+    std::cout << indicesWater.size() << std::endl;
+    indexed_verticesWater = w.getSommets();
     // Load it into a VBO
 
-    GLuint vertexbuffer;
-    glGenBuffers(1, &vertexbuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-    glBufferData(GL_ARRAY_BUFFER, indexed_vertices.size() * sizeof(glm::vec3), &indexed_vertices[0], GL_STATIC_DRAW);
+    // GLuint vertexbuffer;
+    // glGenBuffers(1, &vertexbuffer);
+    // glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+    // glBufferData(GL_ARRAY_BUFFER, indexed_vertices.size() * sizeof(glm::vec3), &indexed_vertices[0], GL_STATIC_DRAW);
+
+    // // Generate a buffer for the indices as well
+    // GLuint elementbuffer;
+    // glGenBuffers(1, &elementbuffer);
+    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
+    // glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned short), &indices[0], GL_STATIC_DRAW);
+
+    GLuint vertexbufferWater;
+    glGenBuffers(1, &vertexbufferWater);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexbufferWater);
+    glBufferData(GL_ARRAY_BUFFER, indexed_verticesWater.size() * sizeof(glm::vec3), &indexed_verticesWater[0], GL_STATIC_DRAW);
 
     // Generate a buffer for the indices as well
-    GLuint elementbuffer;
-    glGenBuffers(1, &elementbuffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned short), &indices[0], GL_STATIC_DRAW);
+    GLuint elementbufferWater;
+    glGenBuffers(1, &elementbufferWater);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbufferWater);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesWater.size() * sizeof(unsigned short), &indicesWater[0], GL_STATIC_DRAW);
 
     // Get a handle for our "LightPosition" uniform
     glUseProgram(programID);
@@ -215,34 +263,23 @@ int main(void)
     // For speed computation
     double lastTime = glfwGetTime();
     int nbFrames = 0;
-    for(int i = 0 ; i<8 ; i++){
-        std::cout<<aquarium.sommetsBox[i][0]<<" ; "<<aquarium.sommetsBox[i][1]<<" ; "<<aquarium.sommetsBox[i][2]<<std::endl ;
-    }
-    /* unsigned int texture0, texture1, texture2, texture3;
-    int width, height, nrChannels;
-    int widthHeightmap, heightHeightmap;
-    glGenTextures(1, &texture1);
-    glBindTexture(GL_TEXTURE_2D, texture1);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    unsigned char *data = stbi_load("earth.png", &width, &height, &nrChannels, 0);
-    if (data)
+    for (int i = 0; i < 8; i++)
     {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
+        std::cout << aquarium.sommetsBox[i][0] << " ; " << aquarium.sommetsBox[i][1] << " ; " << aquarium.sommetsBox[i][2] << std::endl;
     }
-    else
-    {
-        std::cout << "Failed to load texture" << std::endl;
-    }
-    stbi_image_free(data); */
 
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable( GL_BLEND );
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
+    glEnable(GL_BLEND);
+
+    /* // Enable depth test
+    glEnable(GL_DEPTH_TEST);
+    // Accept fragment if it closer to the camera than the former one
+    glDepthFunc(GL_LESS);
+
+    // Clear the screen
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); */
     do
     {
 
@@ -250,6 +287,7 @@ int main(void)
         // per-frame time logic
         // --------------------
         float currentFrame = glfwGetTime();
+        // std::cout<<currentFrame<<std::endl ;
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
@@ -293,8 +331,45 @@ int main(void)
         /****************************************/
 
         // 1rst attribute buffer : vertices
+        // glEnableVertexAttribArray(0);
+        // glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+        // glVertexAttribPointer(
+        //     0,        // attribute
+        //     3,        // size
+        //     GL_FLOAT, // type
+        //     GL_FALSE, // normalized?
+        //     0,        // stride
+        //     (void *)0 // array buffer offset
+        // );
+
+        // // Index buffer
+        // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
+
+        // // Draw the triangles !
+        // glDrawElements(
+        //     GL_TRIANGLES,      // mode
+        //     indices.size(),    // count
+        //     GL_UNSIGNED_SHORT, // type
+        //     (void *)0          // element array buffer offset
+        // );
+
+        // glDisableVertexAttribArray(0);
+
+        // 1rst attribute buffer : vertices
+
+        if (currentFrame < 10)
+        {
+            simulateWater(currentFrame, w);
+            indexed_verticesWater = w.getSommets();
+            std::cout<<indexed_verticesWater[0][1]<<std::endl ;
+            GLuint vertexbufferWater;
+            glGenBuffers(1, &vertexbufferWater);
+            glBindBuffer(GL_ARRAY_BUFFER, vertexbufferWater);
+            glBufferData(GL_ARRAY_BUFFER, indexed_verticesWater.size() * sizeof(glm::vec3), &indexed_verticesWater[0], GL_STATIC_DRAW);
+        }
+
         glEnableVertexAttribArray(0);
-        glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, vertexbufferWater);
         glVertexAttribPointer(
             0,        // attribute
             3,        // size
@@ -305,14 +380,14 @@ int main(void)
         );
 
         // Index buffer
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbufferWater);
 
         // Draw the triangles !
         glDrawElements(
-            GL_TRIANGLES,      // mode
-            indices.size(),    // count
-            GL_UNSIGNED_SHORT, // type
-            (void *)0          // element array buffer offset
+            GL_TRIANGLES,        // mode
+            indicesWater.size(), // count
+            GL_UNSIGNED_SHORT,   // type
+            (void *)0            // element array buffer offset
         );
 
         glDisableVertexAttribArray(0);
@@ -326,8 +401,8 @@ int main(void)
            glfwWindowShouldClose(window) == 0);
 
     // Cleanup VBO and shader
-    glDeleteBuffers(1, &vertexbuffer);
-    glDeleteBuffers(1, &elementbuffer);
+    // glDeleteBuffers(1, &vertexbuffer);
+    // glDeleteBuffers(1, &elementbuffer);
     glDeleteProgram(programID);
     glDeleteVertexArrays(1, &VertexArrayID);
 
@@ -411,4 +486,3 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
 }
-
