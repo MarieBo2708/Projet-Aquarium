@@ -161,7 +161,7 @@ void Water::createAquarium()
         }
     }
 
-    // MUR DE DROITE
+    /* // MUR DE DROITE
     for (int i = resolution; i > 0; i--)
     {
         indices.push_back((i + 1) * (resolution + 1) - 1);
@@ -211,7 +211,7 @@ void Water::createAquarium()
         indices.push_back(resolution * (resolution + 1) + i + count);
         indices.push_back(resolution * (resolution + 1) + i + count + 1);
         indices.push_back(resolution * (resolution + 1) + i + 1);
-    }
+    } */
 
     // for(int i = 0 ; i<resolution ; i++){
     //     // indices.push_back(count-i-1);
