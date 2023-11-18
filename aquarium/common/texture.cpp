@@ -1,10 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <vector>
+#include <iostream>
 
 #include <GL/glew.h>
 
 #include <GLFW/glfw3.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 
 GLuint loadBMP_custom(const char * imagepath){
@@ -215,4 +223,130 @@ GLuint loadDDS(const char * imagepath){
 	return textureID;
 
 
+}
+
+void setDefaultTexture2DParameters(GLuint texture)
+{
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+}
+
+GLuint loadTexture2DFromFilePath(const std::string &path)
+{
+	
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+
+    int width, height, nrChannels;
+    unsigned char *data = stbi_load(path.c_str(), &width, &height, &nrChannels, 3);
+
+	
+
+
+    if (!data)
+    {
+        stbi_image_free(data);
+        std::cout<<"error"<<std::endl;
+    }
+
+	GLenum format;
+	if (nrChannels == 1)
+		format = GL_RED;
+	else if (nrChannels == 3)
+		format = GL_RGB;
+	else if (nrChannels == 4)
+		format = GL_RGBA;
+
+    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    stbi_image_free(data);
+    setDefaultTexture2DParameters(texture);
+    return texture;
+}
+
+GLuint loadTextureFromFilePath(const std::string &path, const std::string directory)
+{
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+	std::string filename = std::string(path);
+    filename = directory + '/' + filename;
+
+    int width, height, nrChannels;
+    unsigned char *data = stbi_load(filename.c_str(), &width, &height, &nrChannels, 3);
+
+    if (!data)
+    {
+        stbi_image_free(data);
+        std::cout<<"error"<<std::endl;
+    }
+
+	GLenum format;
+	if (nrChannels == 1)
+		format = GL_RED;
+	else if (nrChannels == 3)
+		format = GL_RGB;
+	else if (nrChannels == 4)
+		format = GL_RGBA;
+
+    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    stbi_image_free(data);
+    setDefaultTexture2DParameters(texture);
+    return texture;
+}
+
+GLuint loadCubeTexture(std::vector<std::string> faces){
+	GLuint texture;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
+
+	int width, height, nrChannels;
+	unsigned char *data;
+	for(unsigned int i=0; i<faces.size(); i++){
+		data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+		if(data){
+			stbi_set_flip_vertically_on_load(false);
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+			stbi_image_free(data);
+		}
+		else{
+			std::cout<<"ERROR WITH LOADING TEXTURE!"<<std::endl;
+			stbi_image_free(data);
+		}
+	}
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	return texture;
+}
+
+std::vector<glm::vec2> compute_uv(std::vector<glm::vec3> vertices)
+{	
+	float max = 0.5;
+	float min = -0.5;
+    std::vector<glm::vec2> UVs;
+    for(unsigned int i=0; i<4; i++){
+		UVs.push_back(glm::vec2((vertices[i].x - min)/(max - min), (vertices[i].y - min)/(max - min)));
+	}
+	for(unsigned int i=2; i<6; i++){
+		UVs.push_back(glm::vec2((vertices[i].z - min)/(max - min), (vertices[i].y - min)/(max - min)));
+	}
+	UVs.push_back(glm::vec2((vertices[6].x - min)/(max - min), (vertices[6].z - min)/(max - min)));
+	UVs.push_back(glm::vec2((vertices[0].x - min)/(max - min), (vertices[0].z - min)/(max - min)));
+	UVs.push_back(glm::vec2((vertices[3].x - min)/(max - min), (vertices[3].z - min)/(max - min)));
+	UVs.push_back(glm::vec2((vertices[5].x - min)/(max - min), (vertices[5].z - min)/(max - min)));
+
+
+
+    return UVs;
 }

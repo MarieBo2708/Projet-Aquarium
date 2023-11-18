@@ -5,10 +5,10 @@
 
 Water::Water()
 {
-    center = glm::vec3(0, 0, 0);
-    height = 0.8;
-    width = 1;
-    depth = 1;
+    center = glm::vec3(0, -0.1, 0);
+    height = 0.79;
+    width = 1.01;
+    depth = 0.999;
     resolution = 5;
 }
 
@@ -161,7 +161,7 @@ void Water::createAquarium()
         }
     }
 
-    /* // MUR DE DROITE
+    // MUR DE DROITE
     for (int i = resolution; i > 0; i--)
     {
         indices.push_back((i + 1) * (resolution + 1) - 1);
@@ -211,7 +211,7 @@ void Water::createAquarium()
         indices.push_back(resolution * (resolution + 1) + i + count);
         indices.push_back(resolution * (resolution + 1) + i + count + 1);
         indices.push_back(resolution * (resolution + 1) + i + 1);
-    } */
+    } 
 
     // for(int i = 0 ; i<resolution ; i++){
     //     // indices.push_back(count-i-1);
@@ -229,4 +229,21 @@ void Water::createAquarium()
     //     std::cout<<count-(resolution+1)*i<<" ; "<<count-(resolution+1)*i + count<<" ; "<<count-(resolution+1)*(i+1)<<std::endl ;
 
     // }
+}
+
+void Water::simulateWater(float time, Water water)
+{
+    float amplitude = 2.0f;
+    float frequency = 0.01f;
+
+    float wave = amplitude * std::sin(frequency * time);
+    int count = water.getSommets().size() / 2;
+    for (int i = 0; i < water.getResolution(); i++)
+    {
+        for (int j = 0; j < water.getResolution(); j++)
+        {
+            water.getSommets()[count + i * water.getResolution() + j][1] = water.getSommets()[count + i * water.getResolution() + j][1] + wave;
+            //std::cout << water.getSommets()[count + i * water.getResolution() + j][1] + wave << std::endl;
+        }
+    }
 }

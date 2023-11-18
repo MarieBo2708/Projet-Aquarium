@@ -12,5 +12,15 @@ GLuint loadBMP_custom(const char * imagepath);
 // Load a .DDS file using GLFW's own loader
 GLuint loadDDS(const char * imagepath);
 
+std::vector<glm::vec2> compute_uv(std::vector<glm::vec3> vertices);
+
+GLuint loadCubeTexture(std::vector<std::string> faces);
+
+GLuint loadTextureFromFilePath(const std::string &path, const std::string directory);
+
+GLuint loadTexture2DFromFilePath(const std::string &path);
+
+void setDefaultTexture2DParameters(GLuint texture);
+
 
 #endif

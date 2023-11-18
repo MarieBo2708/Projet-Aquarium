@@ -23,6 +23,7 @@ public:
     void createAquarium();
     std::vector<glm::vec3> getSommets() {return sommets;}
     std::vector<unsigned short> getIndices() {return indices;}
+    void simulateWater(float time, Water water);
     int mode = 1 ;
 
 

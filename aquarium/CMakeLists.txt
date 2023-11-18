@@ -69,6 +69,7 @@ add_executable(TP1
 	common/vboindexer.hpp
 	common/Water.cpp
 	common/Water.hpp
+	common/stb_image.h
 
         TP1/vertex_shader.glsl
         TP1/fragment_shader.glsl
